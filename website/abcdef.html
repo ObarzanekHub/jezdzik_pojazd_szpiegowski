@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeździk</title>
+    <style>
+        #warning {
+            color: red;
+            font-weight: bold;
+            display: none;
+            font-size: 30px;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+        .center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #image {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Jeździk - szpiegowski pojazd do wykonywania zdjęć z ukrycia.</h1>
+    <h3>Opis działania:</h3>
+    <ul>
+        <li>Naciśnij "Connect to Bluetooth Device", aby połączyć się z urządzeniem.</li>
+        <br>
+        <li>Przytrzymaj strzałkę w górę, aby pojazd poruszał się do przodu.</li>
+        <li>Przytrzymaj strzałkę w dół, aby pojazd poruszał zaczął cofać.</li>
+        <li>Przytrzymaj strzałkę w prawo, aby pojazd zaczął się obracać w prawo.</li>
+        <li>Przytrzymaj strzałkę w lewo, aby pojazd zaczął się obracać w lewo.</li>
+        <br>
+        <li>Naciśnij 1, 2, lub 3 aby zmienić prędkość poruszania się pojazdu.</li>
+        <li>Naciśnij spację aby wykonać zdjęcie.</li>
+    </ul> 
+
+    <div class="button-container">
+        <button id="connect">Connect to Bluetooth Device</button>
+        <button id="capture">Capture Image</button>
+    </div>
+    <img id="image" style="width: 320px; height: 240px;" />
+    <pre id="output"></pre>
+    <div id="warning">UWAGA!!! Wysokie prędkości! Jedziesz na własną odpowiedzialność!</div>
+
+    <script>
+        let bluetoothDevice;
+        let server;
+        let characteristic;
+        let imageBuffer = [];
+        let keyPressed = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false,  };
+        const END_OF_IMAGE_MARKER = new Uint8Array([0xFF, 0xD9]);  // JPEG End of Image marker
+
+        document.getElementById('connect').addEventListener('click', async () => {
+            try {
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ["4fafc201-1fb5-459e-8fcc-c5c9c331914b",]
+                });
+                server = await bluetoothDevice.gatt.connect();
+                const services = await server.getPrimaryServices();
+                
+                const output = document.getElementById('output');
+                output.innerText = 'Services and Characteristics:\n';
+
+                for (const service of services) {
+                    output.innerText += `Service: ${service.uuid}\n`;
+                    const characteristics = await service.getCharacteristics();
+                    for (const charac of characteristics) {
+                        output.innerText += `  Characteristic: ${charac.uuid}\n`;
+                    }
+                }
+
+                if (services.length > 0) {
+                    const service = services[0];
+                    const characteristics = await service.getCharacteristics();
+                    if (characteristics.length > 0) {
+                        characteristic = characteristics[0];
+                        characteristic.startNotifications().then(() => {
+                            console.log('Notifications started');
+                            characteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+                        });
+                    }
+                }
+
+                console.log('Connected to Bluetooth Device');
+            } catch (error) {
+                console.log('Failed to connect', error);
+            }
+        });
+
+        document.getElementById('capture').addEventListener('click', async () => {
+            sendText('capture');
+        });
+
+        async function sendText(text) {
+            if (characteristic) {
+                let encoder = new TextEncoder();
+                let data = encoder.encode(text);
+                try {
+                    await characteristic.writeValue(data);
+                    console.log('Text sent:', text);
+                } catch (error) {
+                    console.log('Failed to send text', error);
+                }
+            } else {
+                console.log('Not connected to a Bluetooth Device');
+            }
+        }
+
+        function handleNotifications(event) {
+            console.log("handle notifications");
+            let value = event.target.value;
+            for (let i = 0; i < value.byteLength; i++) {
+                imageBuffer.push(value.getUint8(i));
+            }
+
+            if (imageBuffer.length >= 2 && imageBuffer[imageBuffer.length - 2] === 0xFF && imageBuffer[imageBuffer.length - 1] === 0xD9) {
+                let blob = new Blob([new Uint8Array(imageBuffer)], { type: 'image/jpeg' });
+                let url = URL.createObjectURL(blob);
+                document.getElementById('image').src = url;
+                imageBuffer = [];
+            }
+        }
+
+        document.addEventListener('keydown', async (event) => {
+            if (event.key === 'ArrowUp' && !keyPressed.ArrowUp) {
+                keyPressed.ArrowUp = true;
+                sendText('f');
+            } else if (event.key === 'ArrowDown' && !keyPressed.ArrowDown) {
+                keyPressed.ArrowDown = true;
+                sendText('b');
+            } else if (event.key === 'ArrowLeft' && !keyPressed.ArrowLeft) {
+                keyPressed.ArrowLeft = true;
+                sendText('l');
+            } else if (event.key === 'ArrowRight' && !keyPressed.ArrowRight) {
+                keyPressed.ArrowRight = true;
+                sendText('r');
+            } else if (event.key === '1') {
+                sendText('z');
+                document.getElementById('warning').style.display = 'none';
+            } else if (event.key === '2') {
+                sendText('y');
+                document.getElementById('warning').style.display = 'none';
+            } else if (event.key === '3') {
+                sendText('x');
+                document.getElementById('warning').style.display = 'block';
+            } else if (event.key === ' ') {
+                sendText('capture');
+            }
+        });
+
+        document.addEventListener('keyup', async (event) => {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                sendText('a');
+                keyPressed[event.key] = false;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Bluetooth Example</title>
+</head>
+<body>
+    <h1>Web Bluetooth Example</h1>
+    <button id="connect">Connect to Bluetooth Device</button>
+    <input type="text" id="text" placeholder="Enter text to send">
+    <button id="send">Send Text</button>
+    <pre id="output"></pre>
+
+    <script>
+        let bluetoothDevice;
+        let server;
+        let characteristic;
+        let keyPressed = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false,  };
+
+        document.getElementById('connect').addEventListener('click', async () => {
+            try {
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ["4fafc201-1fb5-459e-8fcc-c5c9c331914b"]
+                });
+                server = await bluetoothDevice.gatt.connect();
+                const services = await server.getPrimaryServices();
+                
+                const output = document.getElementById('output');
+                output.innerText = 'Services and Characteristics:\n';
+
+                for (const service of services) {
+                    output.innerText += `Service: ${service.uuid}\n`;
+                    const characteristics = await service.getCharacteristics();
+                    for (const charac of characteristics) {
+                        output.innerText += `  Characteristic: ${charac.uuid}\n`;
+                    }
+                }
+
+                if (services.length > 0) {
+                    const service = services[0];
+                    const characteristics = await service.getCharacteristics();
+                    if (characteristics.length > 0) {
+                        characteristic = characteristics[0];
+                    }
+                }
+
+                console.log('Connected to Bluetooth Device');
+            } catch (error) {
+                console.log('Failed to connect', error);
+            }
+        });
+
+        document.getElementById('send').addEventListener('click', async () => {
+            let text = document.getElementById('text').value;
+            sendText(text);
+        });
+
+        async function sendText(text) {
+            if (characteristic) {
+                let encoder = new TextEncoder();
+                let data = encoder.encode(text);
+                try {
+                    await characteristic.writeValue(data);
+                    console.log('Text sent:', text);
+                } catch (error) {
+                    console.log('Failed to send text', error);
+                }
+            } else {
+                console.log('Not connected to a Bluetooth Device');
+            }
+        }
+
+        document.addEventListener('keydown', async (event) => {
+            if (event.key === 'ArrowUp' && !keyPressed.ArrowUp) {
+                keyPressed.ArrowUp = true;
+                sendText('f');
+            } else if (event.key === 'ArrowDown' && !keyPressed.ArrowDown) {
+                keyPressed.ArrowDown = true;
+                sendText('b');
+            } else if (event.key === 'ArrowLeft' && !keyPressed.ArrowLeft) {
+                keyPressed.ArrowLeft = true;
+                sendText('l');
+            } else if (event.key === 'ArrowRight' && !keyPressed.ArrowRight) {
+                keyPressed.ArrowRight = true;
+                sendText('r');
+            } else if (event.key === '1') {
+                sendText('z');
+            } else if (event.key === '2') {
+                sendText('y');
+            } else if (event.key === '3') {
+                sendText('x');
+            }
+        });
+
+        document.addEventListener('keyup', async (event) => {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                sendText('a');
+                keyPressed[event.key] = false;
+            }
+        });
+    </script>
+</body>
+</html>

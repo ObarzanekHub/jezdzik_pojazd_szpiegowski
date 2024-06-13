@@ -1,0 +1,97 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/connect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Connect to Bluetooth Device"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"/>
+
+    <Button
+        android:id="@+id/capture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Capture Image"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/connect"
+        android:layout_marginTop="20dp"/>
+
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="320dp"
+        android:layout_height="240dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/capture"
+        android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/forward"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:text="Forward"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/image"
+        android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/backward"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:text="Backward"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/forward"
+        android:layout_marginTop="100dp"/>
+
+    <Button
+        android:id="@+id/left"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:text="Left"
+        android:layout_alignParentStart="true"
+        android:layout_below="@id/forward"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="10dp"/>
+
+    <Button
+        android:id="@+id/right"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:text="Right"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/forward"
+        android:layout_marginEnd="50dp"
+        android:layout_marginTop="10dp"/>
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="1"
+        android:layout_below="@id/capture"
+        android:layout_alignStart="@id/left"
+        android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2"
+        android:layout_below="@id/capture"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/button3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="3"
+        android:layout_below="@id/capture"
+        android:layout_alignEnd="@id/right"
+        android:layout_marginTop="20dp"/>
+
+</RelativeLayout>
